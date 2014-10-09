@@ -65,7 +65,10 @@ typedef struct
   */
 
 /* MPU9150 I2C Address */
-#define MPU9150_I2C_ADDR                                         ((0x69)<<1)
+#define MPU9150_I2C_ADDR                                          ((0x69)<<1)
+
+/* AK8975C I2C Address */
+#define AK8975C_I2C_ADDR                                          ((0x0C)<<1)
 
 /******************************************************************************/
 /*************************** START REGISTER MAPPING  **************************/
@@ -153,6 +156,26 @@ typedef struct
 #define MPU9150_FIFO_COUNTL_REG_ADDR                               0x73
 #define MPU9150_FIFO_R_W_REG_ADDR                                  0x74
 #define MPU9150_WHO_AM_I_REG_ADDR                                  0x75
+
+#define AK8975C_WIA_REG_ADDR                                       0x00
+#define AK8975C_INFO_REG_ADDR                                      0x01
+#define AK8975C_ST1_REG_ADDR                                       0x02
+#define AK8975C_HXL_REG_ADDR                                       0x03
+#define AK8975C_HXH_REG_ADDR                                       0x04
+#define AK8975C_HYL_REG_ADDR                                       0x05
+#define AK8975C_HYH_REG_ADDR                                       0x06
+#define AK8975C_HZL_REG_ADDR                                       0x07
+#define AK8975C_HZH_REG_ADDR                                       0x08
+#define AK8975C_ST2_REG_ADDR                                       0x09
+#define AK8975C_CNTL_REG_ADDR                                      0x0A
+#define AK8975C_RSV_REG_ADDR                                       0x0B
+#define AK8975C_ASTC_REG_ADDR                                      0x0C
+#define AK8975C_TS1_REG_ADDR                                       0x0D
+#define AK8975C_TS2_REG_ADDR                                       0x0E
+#define AK8975C_I2CDIS_REG_ADDR                                    0x0F
+#define AK8975C_ASAX_REG_ADDR                                      0x10
+#define AK8975C_ASAY_REG_ADDR                                      0x11
+#define AK8975C_ASAZ_REG_ADDR                                      0x12
 
 /******************************************************************************/
 /**************************** END REGISTER MAPPING  ***************************/

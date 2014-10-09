@@ -15,7 +15,7 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "MPU9150.h"
-#include "stm32f4xx_it.h"
+#include "main.h"
     
 /** @addtogroup Utilities
   * @{
@@ -69,10 +69,11 @@ I2C_TypeDef *MPU9150_I2Cx;
 
 static void MPU9150_I2C_Start(I2C_TypeDef *I2Cx, uint8_t Address, uint8_t I2C_Direction);
 static void MPU9150_I2C_Stop(I2C_TypeDef *I2Cx);
-static void MPU9150_I2C_ReadBuffer(I2C_TypeDef *I2Cx, uint8_t RegAddress, uint8_t *pBuffer, uint8_t nBytes);
-static void MPU9150_I2C_WriteBuffer(I2C_TypeDef *I2Cx, uint8_t RegAddress, uint8_t *pData, uint8_t nBytes);
+static void MPU9150_I2C_ReadBuffer(I2C_TypeDef *I2Cx, uint8_t DevAddress, uint8_t RegAddress, uint8_t *pBuffer, uint8_t nBytes);
+static void MPU9150_I2C_WriteBuffer(I2C_TypeDef *I2Cx, uint8_t DevAddress, uint8_t RegAddress, uint8_t *pData, uint8_t nBytes);
 
 static void MPU9150_LowLevel_Init(void);
+static void MPU9150_Compass_Init(void);
 
 /**
   * @}
@@ -117,6 +118,9 @@ void MPU9150_Init(MPU9150_InitTypeDef *MPU9150_InitStruct)
 	/* Configure the Accelerometer */
 	ctrl = (uint8_t)(MPU9150_InitStruct->Accel_FullScale_Range);
 	MPU9150_Write(MPU9150_ACCEL_CONFIG_REG_ADDR, &ctrl, 1);
+	
+	/* Configure the Magnetometer */
+	MPU9150_Compass_Init();
 }
 
 
@@ -129,7 +133,7 @@ void MPU9150_Init(MPU9150_InitTypeDef *MPU9150_InitStruct)
 void MPU9150_Read(uint8_t RegAddress, uint8_t *pBuffer, uint8_t nBytes)
 {
 	/* Receive buffer */
-	MPU9150_I2C_ReadBuffer(MPU9150_I2Cx, RegAddress, pBuffer, nBytes);
+	MPU9150_I2C_ReadBuffer(MPU9150_I2Cx, MPU9150_I2C_ADDR, RegAddress, pBuffer, nBytes);
 }
 
 
@@ -142,7 +146,7 @@ void MPU9150_Read(uint8_t RegAddress, uint8_t *pBuffer, uint8_t nBytes)
 void MPU9150_Write(uint8_t RegAddress, uint8_t *pData, uint8_t nBytes)
 {
 	/* Transmit buffer */
-	MPU9150_I2C_WriteBuffer(MPU9150_I2Cx, RegAddress, pData, nBytes);
+	MPU9150_I2C_WriteBuffer(MPU9150_I2Cx, MPU9150_I2C_ADDR, RegAddress, pData, nBytes);
 }
 
 
@@ -213,7 +217,7 @@ static void MPU9150_LowLevel_Init(void)
 	}
 	else
 	{
-		UsageFault_Handler();
+		Fail_Handler();
 	}
 	
 	/* I2C1 Configuration */
@@ -223,10 +227,47 @@ static void MPU9150_LowLevel_Init(void)
 	I2C_InitStruct.I2C_OwnAddress1         = 0x00;
 	I2C_InitStruct.I2C_Ack                 = I2C_Ack_Disable;
 	I2C_InitStruct.I2C_AcknowledgedAddress = I2C_AcknowledgedAddress_7bit;
-	I2C_InitStruct.I2C_ClockSpeed          = 300000;                           // 100kHz
+	I2C_InitStruct.I2C_ClockSpeed          = 400000;
 	I2C_Init(MPU9150_I2Cx, &I2C_InitStruct);
 	
 	I2C_Cmd(MPU9150_I2Cx, ENABLE);
+}
+
+
+/**
+  * @brief  Test the AK8975C by reading the WHO_AM_I register.
+  * @retval 0 if successful, 1 otherwise.
+  */
+static uint8_t MPU9150_Compass_Test(void)
+{
+	uint8_t Data = 0x02;
+	
+	/* Enable direct access to AUX I2C bus inside MPU9150 from the Discovery */
+	MPU9150_I2C_WriteBuffer(MPU9150_I2Cx, MPU9150_I2C_ADDR, MPU9150_INT_PIN_CFG_REG_ADDR, &Data, 1);
+	
+	/* Read WHO_AM_I register of AK8975C */
+	MPU9150_I2C_ReadBuffer(MPU9150_I2Cx, AK8975C_I2C_ADDR, AK8975C_WIA_REG_ADDR, &Data, 1);
+	
+	/* Wrong DevID */
+	if (Data != 0x48) return 1;
+	
+	return 0;
+}
+
+
+/**
+  * @brief  Initialize the AK8975C magnetometer integrated in the MPU9150.
+  * @retval None
+  */
+static void MPU9150_Compass_Init(void)
+{
+	/* Perform preliminary compass test */
+	if (0x0 != MPU9150_Compass_Test())
+	{
+		Fail_Handler();
+	}
+	
+	
 }
 
 
@@ -278,12 +319,13 @@ static void MPU9150_I2C_Stop(I2C_TypeDef *I2Cx)
 /**
   * @brief  Read multiple bytes from the MPU9150.
   * @param  I2Cx : I2C interface to which the MPU9150 is connected.
+  * @param  DevAddress : I2C address of the device from which data must be read.
   * @param  RegAddress : Address of the first egister from which data must be read.
   * @param  pBuffer : Pointer to the buffer in which data will be stored.
   * @param  nBytes : Number of bytes to read.
   * @retval None
   */
-static void MPU9150_I2C_ReadBuffer(I2C_TypeDef *I2Cx, uint8_t RegAddress, uint8_t *pBuffer, uint8_t nBytes)
+static void MPU9150_I2C_ReadBuffer(I2C_TypeDef *I2Cx, uint8_t DevAddress, uint8_t RegAddress, uint8_t *pBuffer, uint8_t nBytes)
 {
 	if (nBytes == 0)
 		return;
@@ -292,7 +334,7 @@ static void MPU9150_I2C_ReadBuffer(I2C_TypeDef *I2Cx, uint8_t RegAddress, uint8_
 	while (I2C_GetFlagStatus(I2Cx, I2C_FLAG_BUSY));
 	
 	/* Send START, Device Address and Write Bit (to send register address) */
-	MPU9150_I2C_Start(I2Cx, MPU9150_I2C_ADDR, I2C_Direction_Transmitter);
+	MPU9150_I2C_Start(I2Cx, DevAddress, I2C_Direction_Transmitter);
 	
 	/* Send register address */
 	I2C_SendData(I2Cx, RegAddress);
@@ -301,7 +343,7 @@ static void MPU9150_I2C_ReadBuffer(I2C_TypeDef *I2Cx, uint8_t RegAddress, uint8_
 	while (!I2C_CheckEvent(I2Cx, I2C_EVENT_MASTER_BYTE_TRANSMITTED)) ;
 	
 	/* Send second START, Device Address and Read Bit (to receive data) */
-	MPU9150_I2C_Start(I2Cx, MPU9150_I2C_ADDR, I2C_Direction_Receiver);
+	MPU9150_I2C_Start(I2Cx, DevAddress, I2C_Direction_Receiver);
 	
 	/* Enable ACK for next byte received (Burst mode) */
 	I2C_AcknowledgeConfig(I2Cx, ENABLE);
@@ -333,12 +375,13 @@ static void MPU9150_I2C_ReadBuffer(I2C_TypeDef *I2Cx, uint8_t RegAddress, uint8_
 /**
   * @brief  Write multiple bytes to the MPU9150.
   * @param  I2Cx : I2C interface to which the MPU9150 is connected.
+  * @param  DevAddress : I2C address of the device to which data must be written.
   * @param  RegAddress : Address of the register in which data must be written.
   * @param  pData : Pointer to the data to write.
   * @param  nBytes : Number of bytes to write.
   * @retval None
   */
-static void MPU9150_I2C_WriteBuffer(I2C_TypeDef *I2Cx, uint8_t RegAddress, uint8_t *pData, uint8_t nBytes)
+static void MPU9150_I2C_WriteBuffer(I2C_TypeDef *I2Cx, uint8_t DevAddress, uint8_t RegAddress, uint8_t *pData, uint8_t nBytes)
 {
 	if (nBytes == 0)
 		return;
@@ -347,7 +390,7 @@ static void MPU9150_I2C_WriteBuffer(I2C_TypeDef *I2Cx, uint8_t RegAddress, uint8
 	while (I2C_GetFlagStatus(I2Cx, I2C_FLAG_BUSY));
 	
 	/* Send START, Device Address and Write Bit (to send register address) */
-	MPU9150_I2C_Start(I2Cx, MPU9150_I2C_ADDR, I2C_Direction_Transmitter);
+	MPU9150_I2C_Start(I2Cx, DevAddress, I2C_Direction_Transmitter);
 	
 	/* Send register address */
 	I2C_SendData(I2Cx, RegAddress);
