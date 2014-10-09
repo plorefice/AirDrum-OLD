@@ -1,0 +1,312 @@
+/**
+  ******************************************************************************
+  * @file    MPU9150.h
+  * @author  Pietro Lorefice & Daniele Sportillo
+  * @version V1.0.0
+  * @date    07-October-2014
+  * @brief   This file contains all the functions prototypes for the MPU9150.c
+  *          firmware driver.
+  ******************************************************************************
+  * @attention
+    *
+  * (C) COPYRIGHT 2011 Pietro Lorefice / Daniele Sportillo
+  ******************************************************************************  
+  */ 
+
+/* Define to prevent recursive inclusion -------------------------------------*/
+#ifndef __MPU9150_H
+#define __MPU9150_H
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+    
+/* Includes ------------------------------------------------------------------*/
+#include "stm32f4xx.h"
+    
+/** @addtogroup Utilities
+  * @{
+  */
+  
+/** @addtogroup MPU9150
+  * @{
+  */ 
+
+/** @defgroup MPU9150_Exported_Types
+  * @{
+  */
+    
+/* MPU9150 struct */
+typedef struct 
+{
+	I2C_TypeDef *I2Cx;
+	uint8_t      Clock_Source;
+	uint8_t      SampleRate_Divider;
+	uint8_t      LowPass_Filter;
+	uint8_t      Gyro_FullScale_Range;
+	uint8_t      Accel_FullScale_Range;
+} MPU9150_InitTypeDef;
+    
+/* MPU9150 Interrupt struct */
+typedef struct
+{
+	uint8_t Level;
+	uint8_t Mode;
+	uint8_t Latched;
+	uint8_t Source;
+} MPU9150_InterruptConfigTypeDef;
+
+/**
+  * @}
+  */
+  
+/** @defgroup MPU9150_Exported_Constants
+  * @{
+  */
+
+/* MPU9150 I2C Address */
+#define MPU9150_I2C_ADDR                                         ((0x69)<<1)
+
+/******************************************************************************/
+/*************************** START REGISTER MAPPING  **************************/
+/******************************************************************************/
+
+#define MPU9150_SELF_TEST_X_REG_ADDR                               0x0D
+#define MPU9150_SELF_TEST_Y_REG_ADDR                               0x0E
+#define MPU9150_SELF_TEST_Z_REG_ADDR                               0x0F
+#define MPU9150_SELF_TEST_A_REG_ADDR                               0x10
+#define MPU9150_SMPLRT_DIV_REG_ADDR                                0x19
+#define MPU9150_CONFIG_REG_ADDR                                    0x1A
+#define MPU9150_GYRO_CONFIG_REG_ADDR                               0x1B
+#define MPU9150_ACCEL_CONFIG_REG_ADDR                              0x1C
+#define MPU9150_FIFO_EN_REG_ADDR                                   0x23
+#define MPU9150_I2C_MST_CTRL_REG_ADDR                              0x24
+#define MPU9150_I2C_SLV0_ADDR_REG_ADDR                             0x25
+#define MPU9150_I2C_SLV0_REG_REG_ADDR                              0x26
+#define MPU9150_I2C_SLV0_CTRL_REG_ADDR                             0x27
+#define MPU9150_I2C_SLV1_ADDR_REG_ADDR                             0x28
+#define MPU9150_I2C_SLV1_REG_REG_ADDR                              0x29
+#define MPU9150_I2C_SLV1_CTRL_REG_ADDR                             0x2A
+#define MPU9150_I2C_SLV2_ADDR_REG_ADDR                             0x2B
+#define MPU9150_I2C_SLV2_REG_REG_ADDR                              0x2C
+#define MPU9150_I2C_SLV2_CTRL_REG_ADDR                             0x2D
+#define MPU9150_I2C_SLV3_ADDR_REG_ADDR                             0x2E
+#define MPU9150_I2C_SLV3_REG_REG_ADDR                              0x2F
+#define MPU9150_I2C_SLV3_CTRL_REG_ADDR                             0x30
+#define MPU9150_I2C_SLV4_ADDR_REG_ADDR                             0x31
+#define MPU9150_I2C_SLV4_REG_REG_ADDR                              0x32
+#define MPU9150_I2C_SLV4_DO_REG_ADDR                               0x33
+#define MPU9150_I2C_SLV4_CTRL_REG_ADDR                             0x34
+#define MPU9150_I2C_SLV4_DI_REG_ADDR                               0x35
+#define MPU9150_I2C_MST_STATUS_REG_ADDR                            0x36
+#define MPU9150_INT_PIN_CFG_REG_ADDR                               0x37
+#define MPU9150_INT_ENABLE_REG_ADDR                                0x38
+#define MPU9150_INT_STATUS_REG_ADDR                                0x3A
+#define MPU9150_ACCEL_XOUT_H_REG_ADDR                              0x3B
+#define MPU9150_ACCEL_XOUT_L_REG_ADDR                              0x3C
+#define MPU9150_ACCEL_YOUT_H_REG_ADDR                              0x3D
+#define MPU9150_ACCEL_YOUT_L_REG_ADDR                              0x3E
+#define MPU9150_ACCEL_ZOUT_H_REG_ADDR                              0x3F
+#define MPU9150_ACCEL_ZOUT_L_REG_ADDR                              0x40
+#define MPU9150_TEMP_OUT_H_REG_ADDR                                0x41
+#define MPU9150_TEMP_OUT_L_REG_ADDR                                0x42
+#define MPU9150_GYRO_XOUT_H_REG_ADDR                               0x43
+#define MPU9150_GYRO_XOUT_L_REG_ADDR                               0x44
+#define MPU9150_GYRO_YOUT_H_REG_ADDR                               0x45
+#define MPU9150_GYRO_YOUT_L_REG_ADDR                               0x46
+#define MPU9150_GYRO_ZOUT_H_REG_ADDR                               0x47
+#define MPU9150_GYRO_ZOUT_L_REG_ADDR                               0x48
+#define MPU9150_EXT_SENS_DATA_00_REG_ADDR                          0x49
+#define MPU9150_EXT_SENS_DATA_01_REG_ADDR                          0x4A
+#define MPU9150_EXT_SENS_DATA_02_REG_ADDR                          0x4B
+#define MPU9150_EXT_SENS_DATA_03_REG_ADDR                          0x4C
+#define MPU9150_EXT_SENS_DATA_04_REG_ADDR                          0x4D
+#define MPU9150_EXT_SENS_DATA_05_REG_ADDR                          0x4E
+#define MPU9150_EXT_SENS_DATA_06_REG_ADDR                          0x4F
+#define MPU9150_EXT_SENS_DATA_07_REG_ADDR                          0x50
+#define MPU9150_EXT_SENS_DATA_08_REG_ADDR                          0x51
+#define MPU9150_EXT_SENS_DATA_09_REG_ADDR                          0x52
+#define MPU9150_EXT_SENS_DATA_10_REG_ADDR                          0x53
+#define MPU9150_EXT_SENS_DATA_11_REG_ADDR                          0x54
+#define MPU9150_EXT_SENS_DATA_12_REG_ADDR                          0x55
+#define MPU9150_EXT_SENS_DATA_13_REG_ADDR                          0x56
+#define MPU9150_EXT_SENS_DATA_14_REG_ADDR                          0x57
+#define MPU9150_EXT_SENS_DATA_15_REG_ADDR                          0x58
+#define MPU9150_EXT_SENS_DATA_16_REG_ADDR                          0x59
+#define MPU9150_EXT_SENS_DATA_17_REG_ADDR                          0x5A
+#define MPU9150_EXT_SENS_DATA_18_REG_ADDR                          0x5B
+#define MPU9150_EXT_SENS_DATA_19_REG_ADDR                          0x5C
+#define MPU9150_EXT_SENS_DATA_20_REG_ADDR                          0x5D
+#define MPU9150_EXT_SENS_DATA_21_REG_ADDR                          0x5E
+#define MPU9150_EXT_SENS_DATA_22_REG_ADDR                          0x5F
+#define MPU9150_EXT_SENS_DATA_23_REG_ADDR                          0x60
+#define MPU9150_I2C_SLV0_DO_REG_ADDR                               0x63
+#define MPU9150_I2C_SLV1_DO_REG_ADDR                               0x64
+#define MPU9150_I2C_SLV2_DO_REG_ADDR                               0x65
+#define MPU9150_I2C_SLV3_DO_REG_ADDR                               0x66
+#define MPU9150_I2C_MST_DELAY_CTRL_REG_ADDR                        0x67
+#define MPU9150_SIGNAL_PATH_RESET_REG_ADDR                         0x68
+#define MPU9150_USER_CTRL_REG_ADDR                                 0x6A
+#define MPU9150_PWR_MGMT_1_REG_ADDR                                0x6B
+#define MPU9150_PWR_MGMT_2_REG_ADDR                                0x6C
+#define MPU9150_FIFO_COUNTH_REG_ADDR                               0x72
+#define MPU9150_FIFO_COUNTL_REG_ADDR                               0x73
+#define MPU9150_FIFO_R_W_REG_ADDR                                  0x74
+#define MPU9150_WHO_AM_I_REG_ADDR                                  0x75
+
+/******************************************************************************/
+/**************************** END REGISTER MAPPING  ***************************/
+/******************************************************************************/
+
+/** @defgroup Accelerometer_Sensitivity
+  * @{
+  */
+#define MPU9150_ACCEL_SENSITIVITY_2                       16384.0f /*  LSB/mg */
+#define MPU9150_ACCEL_SENSITIVITY_4                       8192.0f  /*  LSB/mg */
+#define MPU9150_ACCEL_SENSITIVITY_8                       4096.0f  /*  LSB/mg */
+#define MPU9150_ACCEL_SENSITIVITY_16                      2048.0f  /*  LSB/mg */
+/**
+  * @}
+  */
+
+/** @defgroup Gyroscope_Sensitivity
+  * @{
+  */
+#define MPU9150_GYRO_SENSITIVITY_250                      131.0f   /*  LSB/°/s */
+#define MPU9150_GYRO_SENSITIVITY_500                      65.5f    /*  LSB/°/s */
+#define MPU9150_GYRO_SENSITIVITY_1000                     32.8f    /*  LSB/°/s */
+#define MPU9150_GYRO_SENSITIVITY_2000                     16.4f    /*  LSB/°/s */
+/**
+  * @}
+  */
+    
+/** @defgroup External_Synchronization_set
+  * @{
+  */
+#define MPU9150_EXT_SYNC_SET_0                            ((uint8_t)0x00)
+#define MPU9150_EXT_SYNC_SET_1                            ((uint8_t)0x08)
+#define MPU9150_EXT_SYNC_SET_2                            ((uint8_t)0x10)
+#define MPU9150_EXT_SYNC_SET_3                            ((uint8_t)0x18)
+#define MPU9150_EXT_SYNC_SET_4                            ((uint8_t)0x20)
+#define MPU9150_EXT_SYNC_SET_5                            ((uint8_t)0x28)
+#define MPU9150_EXT_SYNC_SET_6                            ((uint8_t)0x30)
+#define MPU9150_EXT_SYNC_SET_7                            ((uint8_t)0x38)
+/**
+  * @}
+  */
+
+/** @defgroup Digital_LowPass_Filter_sonfiguration
+  * @{
+  */
+#define MPU9150_LOWPASSFILTER_0                           ((uint8_t)0x00)
+#define MPU9150_LOWPASSFILTER_1                           ((uint8_t)0x01)
+#define MPU9150_LOWPASSFILTER_2                           ((uint8_t)0x02)
+#define MPU9150_LOWPASSFILTER_3                           ((uint8_t)0x03)
+#define MPU9150_LOWPASSFILTER_4                           ((uint8_t)0x04)
+#define MPU9150_LOWPASSFILTER_5                           ((uint8_t)0x05)
+#define MPU9150_LOWPASSFILTER_6                           ((uint8_t)0x06)
+/**
+  * @}
+  */
+
+/** @defgroup Gyroscope_Full_Scale_selection
+  * @{
+  */
+#define MPU9150_GYRO_FULLSCALE_250                        ((uint8_t)0x00)
+#define MPU9150_GYRO_FULLSCALE_500                        ((uint8_t)0x08)
+#define MPU9150_GYRO_FULLSCALE_1000                       ((uint8_t)0x10)
+#define MPU9150_GYRO_FULLSCALE_2000                       ((uint8_t)0x18)
+/**
+  * @}
+  */
+    
+/** @defgroup Accelerometer_Full_Scale_selection
+    * @{
+    */
+#define MPU9150_ACCEL_FULLSCALE_2                         ((uint8_t)0x00)
+#define MPU9150_ACCEL_FULLSCALE_4                         ((uint8_t)0x08)
+#define MPU9150_ACCEL_FULLSCALE_8                         ((uint8_t)0x10)
+#define MPU9150_ACCEL_FULLSCALE_16                        ((uint8_t)0x18)
+/**
+  * @}
+  */
+
+/** @defgroup FIFO_Enable_selection
+    * @{
+    */
+#define MPU9150_FIFO_GYRO_X                               ((uint8_t)0x40)
+#define MPU9150_FIFO_GYRO_Y                               ((uint8_t)0x20)
+#define MPU9150_FIFO_GYRO_Z                               ((uint8_t)0x10)
+#define MPU9150_FIFO_ACCEL                                ((uint8_t)0x08)
+/**
+  * @}
+  */
+
+/** @defgroup Interrupt_Pin_configuration
+    * @{
+    */
+#define MPU9150_INTERRUPT_LEVEL_HIGH                      ((uint8_t)0x00)
+#define MPU9150_INTERRUPT_LEVEL_LOW                       ((uint8_t)0x80)
+#define MPU9150_INTERRUPT_MODE_PUSH_PULL                  ((uint8_t)0x00)
+#define MPU9150_INTERRUPT_MODE_OPEN_DRAIN                 ((uint8_t)0x40)
+#define MPU9150_INTERRUPT_PULSE                           ((uint8_t)0x00)
+#define MPU9150_INTERRUPT_LATCHED                         ((uint8_t)0x20)
+/**
+  * @}
+  */
+
+/** @defgroup Interrupt_Source_selection
+    * @{
+    */
+#define MPU9150_INTERRUPT_SOURCE_NONE                     ((uint8_t)0x00)
+#define MPU9150_INTERRUPT_SOURCE_FIFO_OF                  ((uint8_t)0x10)
+#define MPU9150_INTERRUPT_SOURCE_DATA_RDY                 ((uint8_t)0x01)
+/**
+  * @}
+  */
+    
+/** @defgroup Clock_Source_selection
+    * @{
+    */
+#define MPU9150_CLOCK_SRC_INTERNAL_OSC                    ((uint8_t)0x00)
+#define MPU9150_CLOCK_SRC_GYRO_X_AXIS                     ((uint8_t)0x01)
+#define MPU9150_CLOCK_SRC_GYRO_Y_AXIS                     ((uint8_t)0x02)
+#define MPU9150_CLOCK_SRC_GYRO_Z_AXIS                     ((uint8_t)0x03)
+#define MPU9150_CLOCK_SRC_EXT_32_7_KHZ                    ((uint8_t)0x04)
+#define MPU9150_CLOCK_SRC_EXT_19_2_MHZ                    ((uint8_t)0x05)
+#define MPU9150_CLOCK_SRC_RESET                           ((uint8_t)0x07)
+/**
+  * @}
+  */
+/**
+  * @}
+  */ 
+
+/** @defgroup MPU9150_Exported_Functions
+  * @{
+  */
+void MPU9150_Init(MPU9150_InitTypeDef *MPU9150_InitStruct);
+void MPU9150_InterruptConfig(MPU9150_InterruptConfigTypeDef *MPU9150_InterruptConfigStruct);
+void MPU9150_Read(uint8_t RegAddress, uint8_t *pBuffer, uint8_t nBytes);
+void MPU9150_Write(uint8_t RegAddress, uint8_t *pData, uint8_t nBytes);
+void MPU9150_ReadAccel(int16_t *pBuffer);
+
+/**
+  * @}
+  */ 
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif        /* __MPU9150_H */
+/**
+  * @}
+  */ 
+    
+/**
+  * @}
+  */ 
+
+
+/******************* (C) COPYRIGHT 2011 Pietro Lorefice / Daniele Sportillo *****END OF FILE****/
