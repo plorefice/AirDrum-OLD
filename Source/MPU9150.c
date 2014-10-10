@@ -181,7 +181,7 @@ void MPU9150_Write(uint8_t RegAddress, uint8_t *pData, uint8_t nBytes)
 
 
 /**
-  * @brief  Read the value of the accelerations from the MPU9150.
+  * @brief  Read the value of the accelerometer from the MPU9150.
 	* @param  pBuffer: Pointer to a buffer of size int16_t[3].
   * @retval None
   */
@@ -192,6 +192,34 @@ void MPU9150_ReadAccel(int16_t *pBuffer)
 	pBuffer[0] = (int16_t)(bswap16(pBuffer[0]));
 	pBuffer[1] = (int16_t)(bswap16(pBuffer[1]));
 	pBuffer[2] = (int16_t)(bswap16(pBuffer[2]));
+}
+
+
+/**
+  * @brief  Read the value of the gyroscope from the MPU9150.
+	* @param  pBuffer: Pointer to a buffer of size int16_t[3].
+  * @retval None
+  */
+void MPU9150_ReadGyro(int16_t *pBuffer)
+{
+	MPU9150_Read(MPU9150_GYRO_XOUT_H_REG_ADDR, (uint8_t *)pBuffer, 6);
+
+	pBuffer[0] = (int16_t)(bswap16(pBuffer[0]));
+	pBuffer[1] = (int16_t)(bswap16(pBuffer[1]));
+	pBuffer[2] = (int16_t)(bswap16(pBuffer[2]));
+}
+
+
+/**
+  * @brief  Read the value of the accelerations from the MPU9150.
+	* @param  pBuffer: Pointer to a buffer of size int16_t[3].
+  * @retval None
+  */
+void MPU9150_ReadFIFO(int16_t *pBuffer)
+{
+	MPU9150_Read(MPU9150_FIFO_COUNTH_REG_ADDR, (uint8_t *)pBuffer, 2);
+
+	pBuffer[0] = (int16_t)(bswap16(pBuffer[0]));
 }
 
 

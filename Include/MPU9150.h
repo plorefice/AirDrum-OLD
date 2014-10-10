@@ -313,6 +313,8 @@ void MPU9150_InterruptConfig(MPU9150_InterruptConfigTypeDef *MPU9150_InterruptCo
 void MPU9150_Read(uint8_t RegAddress, uint8_t *pBuffer, uint8_t nBytes);
 void MPU9150_Write(uint8_t RegAddress, uint8_t *pData, uint8_t nBytes);
 void MPU9150_ReadAccel(int16_t *pBuffer);
+void MPU9150_ReadGyro(int16_t *pBuffer);
+void MPU9150_ReadFIFO(int16_t *pBuffer);
 
 /**
   * @}

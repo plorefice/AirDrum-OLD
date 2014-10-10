@@ -150,7 +150,7 @@ void PendSV_Handler(void)
   */
 void SysTick_Handler(void)
 {
-	uint32_t Counter = 0x0;
+//	uint32_t Counter = 0x0;
 	int16_t  pRawAccelData[3];
 	float		 pAccelData[3];
 	
