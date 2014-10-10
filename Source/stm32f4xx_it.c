@@ -161,7 +161,9 @@ void SysTick_Handler(void)
 	
 	if (ProgramExecuting)
 	{
-		MPU9150_ReadFIFO(pRawData);
+		uint16_t nSamples = 0x0;
+		
+		nSamples = MPU9150_ReadFIFO(0);
 		
 		MPU9150_ReadAccel(pRawData);
 		

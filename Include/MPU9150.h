@@ -308,13 +308,13 @@ typedef struct
 /** @defgroup MPU9150_Exported_Functions
   * @{
   */
-void MPU9150_Init(MPU9150_InitTypeDef *MPU9150_InitStruct);
-void MPU9150_InterruptConfig(MPU9150_InterruptConfigTypeDef *MPU9150_InterruptConfigStruct);
-void MPU9150_Read(uint8_t RegAddress, uint8_t *pBuffer, uint8_t nBytes);
-void MPU9150_Write(uint8_t RegAddress, uint8_t *pData, uint8_t nBytes);
-void MPU9150_ReadAccel(int16_t *pBuffer);
-void MPU9150_ReadGyro(int16_t *pBuffer);
-void MPU9150_ReadFIFO(int16_t *pBuffer);
+void     MPU9150_Init(MPU9150_InitTypeDef *MPU9150_InitStruct);
+void     MPU9150_InterruptConfig(MPU9150_InterruptConfigTypeDef *MPU9150_InterruptConfigStruct);
+void     MPU9150_Read(uint8_t RegAddress, uint8_t *pBuffer, uint8_t nBytes);
+void     MPU9150_Write(uint8_t RegAddress, uint8_t *pData, uint8_t nBytes);
+void     MPU9150_ReadAccel(int16_t *pBuffer);
+void     MPU9150_ReadGyro(int16_t *pBuffer);
+uint16_t MPU9150_ReadFIFO(uint8_t *pBuffer);
 
 /**
   * @}

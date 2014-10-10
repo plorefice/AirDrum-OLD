@@ -138,7 +138,10 @@ void MPU9150_InterruptConfig(MPU9150_InterruptConfigTypeDef *MPU9150_InterruptIn
 	ctrl = (uint8_t)(MPU9150_InterruptInitStruct->Sources);
 	MPU9150_Write(MPU9150_FIFO_EN_REG_ADDR, &ctrl, 1);
 	
-	/* Enable FIFO buffer */
+	/* Reset and enable FIFO buffer */
+	ctrl = 0x04;
+	MPU9150_Write(MPU9150_USER_CTRL_REG_ADDR, &ctrl, 1);
+	
 	ctrl = 0x40;
 	MPU9150_Write(MPU9150_USER_CTRL_REG_ADDR, &ctrl, 1);
 	
@@ -212,14 +215,20 @@ void MPU9150_ReadGyro(int16_t *pBuffer)
 
 /**
   * @brief  Read the value of the accelerations from the MPU9150.
-	* @param  pBuffer: Pointer to a buffer of size int16_t[3].
-  * @retval None
+	* @param  pBuffer: Pointer to a buffer of adequate size.
+  * @retval Number of samples available in the FIFO.
   */
-void MPU9150_ReadFIFO(int16_t *pBuffer)
+uint16_t MPU9150_ReadFIFO(uint8_t *pBuffer)
 {
-	MPU9150_Read(MPU9150_FIFO_COUNTH_REG_ADDR, (uint8_t *)pBuffer, 2);
+	uint16_t nSamples;
+	
+	/* Read number of samples */
+	MPU9150_Read(MPU9150_FIFO_COUNTH_REG_ADDR, (uint8_t *)&nSamples, 2);
+	nSamples = (uint16_t)(bswap16(nSamples));
 
-	pBuffer[0] = (int16_t)(bswap16(pBuffer[0]));
+	/* TODO: read data */
+	
+	return nSamples;
 }
 
 
