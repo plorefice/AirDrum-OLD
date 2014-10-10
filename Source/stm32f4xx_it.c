@@ -151,8 +151,8 @@ void PendSV_Handler(void)
 void SysTick_Handler(void)
 {
 //	uint32_t Counter = 0x0;
-	int16_t  pRawAccelData[3];
-	float		 pAccelData[3];
+	int16_t  pRawData[3];
+	float		 pData[3];
 	
 	if (TimingDelay != 0)
 	{
@@ -161,13 +161,15 @@ void SysTick_Handler(void)
 	
 	if (ProgramExecuting)
 	{
-		MPU9150_ReadAccel(pRawAccelData);
+		MPU9150_ReadFIFO(pRawData);
 		
-		pAccelData[0] = pRawAccelData[0] / MPU9150_ACCEL_SENSITIVITY_2;
-		pAccelData[1] = pRawAccelData[1] / MPU9150_ACCEL_SENSITIVITY_2;
-		pAccelData[2] = pRawAccelData[2] / MPU9150_ACCEL_SENSITIVITY_2;
+		MPU9150_ReadAccel(pRawData);
+		
+		pData[0] = pRawData[0] / MPU9150_ACCEL_SENSITIVITY_2;
+		pData[1] = pRawData[1] / MPU9150_ACCEL_SENSITIVITY_2;
+		pData[2] = pRawData[2] / MPU9150_ACCEL_SENSITIVITY_2;
 
-		VCP_DataTx((uint8_t *)pAccelData, sizeof(pAccelData[0]) * 3);
+		VCP_DataTx((uint8_t *)pData, sizeof(pData));
 		
 		STM_EVAL_LEDToggle(LED6);
 	}
