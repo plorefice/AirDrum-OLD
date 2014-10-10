@@ -42,6 +42,7 @@ __ALIGN_BEGIN USB_OTG_CORE_HANDLE  USB_OTG_dev __ALIGN_END;
   
 __IO uint32_t 	TimingDelay = 0x0;
 __IO uint8_t		ProgramExecuting = 0x0;
+__IO int16_t    pIMUBuffer[6];
 
 /* Private function prototypes -----------------------------------------------*/
 static uint32_t STM_USB_Config(void);
@@ -191,11 +192,10 @@ static uint32_t MPU9150_Config(void)
 	MPU9150_InitStruct.I2Cx                  = I2C1;
 	MPU9150_InitStruct.Clock_Source          = MPU9150_CLOCK_SRC_GYRO_X_AXIS;
 	MPU9150_InitStruct.LowPass_Filter        = MPU9150_LOWPASSFILTER_3;
-	MPU9150_InitStruct.SampleRate_Divider    = 9;                             
+	MPU9150_InitStruct.SampleRate_Divider    = 0;                             
 	MPU9150_InitStruct.Gyro_FullScale_Range  = MPU9150_GYRO_FULLSCALE_500;
 	MPU9150_InitStruct.Accel_FullScale_Range = MPU9150_ACCEL_FULLSCALE_2;
 	MPU9150_Init(&MPU9150_InitStruct);
-	
 		
 	/* Interrupt pin configuration */
 	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOB, ENABLE);

@@ -41,6 +41,7 @@
 /* Private variables ---------------------------------------------------------*/
 extern __IO uint32_t	TimingDelay;
 extern __IO uint8_t		ProgramExecuting;
+extern __IO int16_t   pIMUBuffer[6];
 
 /* Private function prototypes -----------------------------------------------*/
 extern USB_OTG_CORE_HANDLE           USB_OTG_dev;
@@ -152,7 +153,7 @@ void SysTick_Handler(void)
 	
 	if (ProgramExecuting)
 	{	
-		
+		VCP_DataTx((uint8_t *)pIMUBuffer, sizeof(pIMUBuffer));
 	}
 }
 
@@ -183,18 +184,15 @@ void EXTI4_IRQHandler(void)
 	if (EXTI_GetITStatus(EXTI_Line4) == SET)
 	{
 		int16_t  nSamples = 0x0;
-		int16_t  pBuffer[9];
 		uint8_t  Status = 0x0;
 		
 		/* Clear interrupt flag */
 		MPU9150_Read(MPU9150_INT_STATUS_REG_ADDR, &Status, 1);
 		
 		/* Read FIFO */
-		nSamples = MPU9150_ReadFIFO(pBuffer);
+		nSamples = MPU9150_ReadFIFO((int16_t *)pIMUBuffer);
 		
 		if (nSamples != 0x0C) STM_EVAL_LEDToggle(LED5);
-		
-		VCP_DataTx((uint8_t *)pBuffer, nSamples);
 		
 		STM_EVAL_LEDToggle(LED4);
 		
