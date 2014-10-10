@@ -146,8 +146,8 @@ void MPU9150_InterruptConfig(MPU9150_InterruptConfigTypeDef *MPU9150_InterruptIn
 	MPU9150_Write(MPU9150_USER_CTRL_REG_ADDR, &ctrl, 1);
 	
 	/* Enable interrupts */
-	ctrl = (uint8_t)(MPU9150_InterruptInitStruct->Level |
-	                 MPU9150_InterruptInitStruct->Mode  |
+	ctrl = (uint8_t)(MPU9150_InterruptInitStruct->Level   |
+	                 MPU9150_InterruptInitStruct->Mode    |
 	                 MPU9150_InterruptInitStruct->Latched);
 	MPU9150_Write(MPU9150_INT_PIN_CFG_REG_ADDR, &ctrl, 1);
 	
@@ -218,15 +218,25 @@ void MPU9150_ReadGyro(int16_t *pBuffer)
 	* @param  pBuffer: Pointer to a buffer of adequate size.
   * @retval Number of samples available in the FIFO.
   */
-uint16_t MPU9150_ReadFIFO(uint8_t *pBuffer)
+uint16_t MPU9150_ReadFIFO(int16_t *pBuffer)
 {
 	uint16_t nSamples;
+	uint16_t i;
 	
 	/* Read number of samples */
 	MPU9150_Read(MPU9150_FIFO_COUNTH_REG_ADDR, (uint8_t *)&nSamples, 2);
 	nSamples = (uint16_t)(bswap16(nSamples));
 
-	/* TODO: read data */
+	/* Read data */
+	for (i = 0; i < (nSamples >> 1); i++)
+	{
+		uint8_t *buff = (uint8_t *)&pBuffer[i];
+		
+		MPU9150_Read(MPU9150_FIFO_R_W_REG_ADDR, buff++, 1);
+		MPU9150_Read(MPU9150_FIFO_R_W_REG_ADDR, buff, 1);
+		
+		pBuffer[i] = (int16_t)(bswap16(pBuffer[i]));
+	}
 	
 	return nSamples;
 }
@@ -308,20 +318,21 @@ static void MPU9150_LowLevel_Init(void)
 static uint8_t MPU9150_Compass_Test(void)
 {
 	uint8_t Data = 0x00;
+	uint8_t WAI;
 	
 	/* Enable direct access to AUX I2C bus inside MPU9150 from the Discovery */
 	Data = 0x02;
 	MPU9150_I2C_WriteBuffer(MPU9150_I2Cx, MPU9150_I2C_ADDR, MPU9150_INT_PIN_CFG_REG_ADDR, &Data, 1);
 	
 	/* Read WHO_AM_I register of AK8975C */
-	MPU9150_I2C_ReadBuffer(MPU9150_I2Cx, AK8975C_I2C_ADDR, AK8975C_WIA_REG_ADDR, &Data, 1);
+	MPU9150_I2C_ReadBuffer(MPU9150_I2Cx, AK8975C_I2C_ADDR, AK8975C_WIA_REG_ADDR, &WAI, 1);
 	
 	/* Disable direct access to AUX I2C bus */
 	Data = 0x00;
 	MPU9150_I2C_WriteBuffer(MPU9150_I2Cx, MPU9150_I2C_ADDR, MPU9150_INT_PIN_CFG_REG_ADDR, &Data, 1);
 	
 	/* Wrong DevID */
-	if (Data != 0x48) return 1;
+	if (WAI != 0x48) return 1;
 	
 	return 0;
 }

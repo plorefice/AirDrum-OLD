@@ -41,11 +41,6 @@
 /* Private variables ---------------------------------------------------------*/
 extern __IO uint32_t	TimingDelay;
 extern __IO uint8_t		ProgramExecuting;
-extern __IO	int32_t		AccelerationValue[3];
-extern __IO uint8_t		SingleClickXDetect;
-extern __IO uint8_t		SingleClickYDetect;
-extern __IO uint8_t		SingleClickZDetect;
-						uint8_t		ClickReg = 0x0;
 
 /* Private function prototypes -----------------------------------------------*/
 extern USB_OTG_CORE_HANDLE           USB_OTG_dev;
@@ -150,52 +145,15 @@ void PendSV_Handler(void)
   */
 void SysTick_Handler(void)
 {
-//	uint32_t Counter = 0x0;
-	int16_t  pRawData[3];
-	float		 pData[3];
-	
 	if (TimingDelay != 0)
 	{
 		TimingDelay_Decrement();
 	}
 	
 	if (ProgramExecuting)
-	{		
-		MPU9150_ReadAccel(pRawData);
+	{	
 		
-		pData[0] = pRawData[0] / MPU9150_ACCEL_SENSITIVITY_2;
-		pData[1] = pRawData[1] / MPU9150_ACCEL_SENSITIVITY_2;
-		pData[2] = pRawData[2] / MPU9150_ACCEL_SENSITIVITY_2;
-
-		VCP_DataTx((uint8_t *)pData, sizeof(pData));
-		
-		STM_EVAL_LEDToggle(LED6);
 	}
-
-//	else if (ProgramExecuting && ((++Counter) == 20))
-//	{
-//		uint8_t	i;
-//		int32_t AccelerationTmp[3];
-//		
-//		LIS302DL_ReadACC((int32_t *)AccelerationTmp);
-//		
-//		for (i = 0; i < 3; i++)
-//		{
-//			AccelerationValue[i] = (AccelerationTmp[i] > AccelerationValue[i]) ?
-//															AccelerationTmp[i] : AccelerationValue[i];
-//		}
-//		
-//		LIS302DL_Read(&ClickReg, LIS302DL_CLICK_SRC_REG_ADDR, 1);
-//		
-//		if (ClickReg & LIS302DL_PENDING_IRQ)
-//		{
-//			if (ClickReg & LIS302DL_CLICK_X) SingleClickXDetect = 0x01;
-//			if (ClickReg & LIS302DL_CLICK_Y) SingleClickYDetect = 0x01;
-//			if (ClickReg & LIS302DL_CLICK_Z) SingleClickZDetect = 0x01;
-//		}
-//		
-//		Counter = 0x0;
-//	}
 }
 
 /******************************************************************************/
@@ -214,20 +172,6 @@ void SysTick_Handler(void)
 {
 }*/
 
-/**
-  * @brief  This function handles EXTI0_IRQ Handler.
-  * @param  None
-  * @retval None
-  */
-void EXTI0_IRQHandler(void)
-{
-	if (EXTI_GetITStatus(EXTI_Line0) == SET)
-	{
-		DrumKitChangeState();
-		EXTI_ClearITPendingBit(EXTI_Line0);
-	}
-}
-
 
 /**
   * @brief  This function handles EXTI0_IRQ Handler.
@@ -238,12 +182,21 @@ void EXTI4_IRQHandler(void)
 {
 	if (EXTI_GetITStatus(EXTI_Line4) == SET)
 	{
-		uint16_t nSamples = 0x0;
+		int16_t  nSamples = 0x0;
+		int16_t  pBuffer[9];
 		uint8_t  Status = 0x0;
 		
+		/* Clear interrupt flag */
 		MPU9150_Read(MPU9150_INT_STATUS_REG_ADDR, &Status, 1);
 		
-		nSamples = MPU9150_ReadFIFO(0);
+		/* Read FIFO */
+		nSamples = MPU9150_ReadFIFO(pBuffer);
+		
+		if (nSamples != 0x0C) STM_EVAL_LEDToggle(LED5);
+		
+		VCP_DataTx((uint8_t *)pBuffer, nSamples);
+		
+		STM_EVAL_LEDToggle(LED4);
 		
 		EXTI_ClearITPendingBit(EXTI_Line4);
 	}

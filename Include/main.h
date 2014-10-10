@@ -33,7 +33,6 @@
 /* Exported constants --------------------------------------------------------*/
 /* Exported macro ------------------------------------------------------------*/
 /* Exported functions ------------------------------------------------------- */
-void DrumKitChangeState(void);
 void TimingDelay_Decrement(void);
 void Delay(__IO uint32_t nTime);
 void Fail_Handler(void);

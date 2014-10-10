@@ -31,14 +31,6 @@
 
 /* Private define ------------------------------------------------------------*/
 /* Private typedef -----------------------------------------------------------*/
-typedef enum {
-	BASS_DRUM = 0,
-	SNARE,
-	HI_HAT,
-	ALL,
-	DKS_NUM
-}	DrumKitState_t;
-
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
 #ifdef USB_OTG_HS_INTERNAL_DMA_ENABLED
@@ -50,14 +42,6 @@ __ALIGN_BEGIN USB_OTG_CORE_HANDLE  USB_OTG_dev __ALIGN_END;
   
 __IO uint32_t 	TimingDelay = 0x0;
 __IO uint8_t		ProgramExecuting = 0x0;
-__IO int32_t		AccelerationValue[3];
-__IO uint8_t		SingleClickXDetect = 0x0;
-__IO uint8_t		SingleClickYDetect = 0x0;
-__IO uint8_t		SingleClickZDetect = 0x0;
-
-DrumKitState_t	DrumKitState = BASS_DRUM;
-
-extern uint8_t	ClickReg;
 
 /* Private function prototypes -----------------------------------------------*/
 static uint32_t STM_USB_Config(void);
@@ -102,64 +86,7 @@ int main(void)
 
 	while(1)
 	{
-//		if (SingleClickXDetect ||
-//				SingleClickYDetect ||
-//				SingleClickZDetect)
-//		{
-//			uint8_t pMIDIMsg[3];
-//			
-//			/* Clear CLICK_SRC Reg */
-//			LIS302DL_Read(&ClickReg, LIS302DL_CLICK_SRC_REG_ADDR, 1); 
-
-//			if (SingleClickXDetect && 
-//				  (DrumKitState == SNARE ||
-//					 DrumKitState == ALL )
-//				 )
-//			{
-//				pMIDIMsg[0] = 0x99;				// NOTE ON command on CH10 (Percussions)
-//				pMIDIMsg[1] = 0x26;				// BASS DRUM note
-//				pMIDIMsg[2] = 0x7F;				// Velocity
-//				VCP_DataTx(pMIDIMsg, 3);
-//				AccelerationValue[0] = 0;
-//			}
-//			
-//			if (SingleClickYDetect && 
-//				  (DrumKitState == HI_HAT ||
-//					 DrumKitState == ALL )
-//				 )
-//			{
-//				pMIDIMsg[0] = 0x99;				// NOTE ON command on CH10 (Percussions)
-//				pMIDIMsg[1] = 0x2C;				// BASS DRUM note
-//				pMIDIMsg[2] = 0x7F;				// Velocity
-//				VCP_DataTx(pMIDIMsg, 3);
-//				AccelerationValue[1] = 0;
-//			}
-//			
-//			if (SingleClickZDetect && 
-//				  (DrumKitState == BASS_DRUM ||
-//					 DrumKitState == ALL )
-//				 )	
-//			{
-//				pMIDIMsg[0] = 0x99;				// NOTE ON command on CH10 (Percussions)
-//				pMIDIMsg[1] = 0x23;				// BASS DRUM note
-//				pMIDIMsg[2] = AccelerationValue[2] / 80;				// Velocity
-//				VCP_DataTx(pMIDIMsg, 3);
-//				AccelerationValue[2] = 0;
-//			}
-
-//			SingleClickXDetect = 0x00;
-//			SingleClickYDetect = 0x00;
-//			SingleClickZDetect = 0x00;
-//		}
 	}
-}
-
-
-void DrumKitChangeState(void)
-{
-	uint32_t CurrentState = (uint32_t)DrumKitState;
-	CurrentState = (CurrentState + 1) % DKS_NUM;	
-	DrumKitState = (DrumKitState_t)(CurrentState);
 }
 
 
@@ -260,6 +187,16 @@ static uint32_t MPU9150_Config(void)
 	EXTI_InitTypeDef               EXTI_InitStruct;
 	NVIC_InitTypeDef               NVIC_InitStruct;
 	
+	/* MPU9150 Configuration */
+	MPU9150_InitStruct.I2Cx                  = I2C1;
+	MPU9150_InitStruct.Clock_Source          = MPU9150_CLOCK_SRC_GYRO_X_AXIS;
+	MPU9150_InitStruct.LowPass_Filter        = MPU9150_LOWPASSFILTER_3;
+	MPU9150_InitStruct.SampleRate_Divider    = 9;                             
+	MPU9150_InitStruct.Gyro_FullScale_Range  = MPU9150_GYRO_FULLSCALE_500;
+	MPU9150_InitStruct.Accel_FullScale_Range = MPU9150_ACCEL_FULLSCALE_2;
+	MPU9150_Init(&MPU9150_InitStruct);
+	
+		
 	/* Interrupt pin configuration */
 	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOB, ENABLE);
 	RCC_APB2PeriphClockCmd(RCC_APB2Periph_SYSCFG, ENABLE);
@@ -286,15 +223,6 @@ static uint32_t MPU9150_Config(void)
 	  NVIC_IRQChannelSubPriority             = 0x01;
 	NVIC_InitStruct.NVIC_IRQChannelCmd       = ENABLE;
 	NVIC_Init(&NVIC_InitStruct);
-	
-	/* MPU9150 Configuration */
-	MPU9150_InitStruct.I2Cx                  = I2C1;
-	MPU9150_InitStruct.Clock_Source          = MPU9150_CLOCK_SRC_GYRO_X_AXIS;
-	MPU9150_InitStruct.LowPass_Filter        = MPU9150_LOWPASSFILTER_6;
-	MPU9150_InitStruct.SampleRate_Divider    = 0;                             
-	MPU9150_InitStruct.Gyro_FullScale_Range  = MPU9150_GYRO_FULLSCALE_500;
-	MPU9150_InitStruct.Accel_FullScale_Range = MPU9150_ACCEL_FULLSCALE_2;
-	MPU9150_Init(&MPU9150_InitStruct);
 	
 	/* MPU9150 Interrupt configuration */
 	MPU9150_InterruptInitStruct.Mode         = MPU9150_INTERRUPT_MODE_PUSH_PULL;
