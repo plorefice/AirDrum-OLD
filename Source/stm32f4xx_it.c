@@ -160,11 +160,7 @@ void SysTick_Handler(void)
 	}
 	
 	if (ProgramExecuting)
-	{
-		uint16_t nSamples = 0x0;
-		
-		nSamples = MPU9150_ReadFIFO(0);
-		
+	{		
 		MPU9150_ReadAccel(pRawData);
 		
 		pData[0] = pRawData[0] / MPU9150_ACCEL_SENSITIVITY_2;
@@ -232,6 +228,28 @@ void EXTI0_IRQHandler(void)
 	}
 }
 
+
+/**
+  * @brief  This function handles EXTI0_IRQ Handler.
+  * @param  None
+  * @retval None
+  */
+void EXTI4_IRQHandler(void)
+{
+	if (EXTI_GetITStatus(EXTI_Line4) == SET)
+	{
+		uint16_t nSamples = 0x0;
+		uint8_t  Status = 0x0;
+		
+		MPU9150_Read(MPU9150_INT_STATUS_REG_ADDR, &Status, 1);
+		
+		nSamples = MPU9150_ReadFIFO(0);
+		
+		EXTI_ClearITPendingBit(EXTI_Line4);
+	}
+}
+
+
 /**
   * @brief  This function handles EXTI15_10_IRQ Handler.
   * @param  None
@@ -250,6 +268,7 @@ void OTG_FS_WKUP_IRQHandler(void)
   }
   EXTI_ClearITPendingBit(EXTI_Line18);
 }
+
 
 /**
   * @brief  This function handles OTG_HS Handler.

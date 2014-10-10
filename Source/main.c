@@ -256,6 +256,37 @@ static uint32_t MPU9150_Config(void)
 	MPU9150_InitTypeDef            MPU9150_InitStruct;
 	MPU9150_InterruptConfigTypeDef MPU9150_InterruptInitStruct;
 	
+	GPIO_InitTypeDef               GPIO_InitStruct;
+	EXTI_InitTypeDef               EXTI_InitStruct;
+	NVIC_InitTypeDef               NVIC_InitStruct;
+	
+	/* Interrupt pin configuration */
+	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOB, ENABLE);
+	RCC_APB2PeriphClockCmd(RCC_APB2Periph_SYSCFG, ENABLE);
+	
+	GPIO_InitStruct.GPIO_Pin                 = GPIO_Pin_4;
+	GPIO_InitStruct.GPIO_Mode                = GPIO_Mode_IN;
+	GPIO_InitStruct.GPIO_Speed               = GPIO_Speed_100MHz;
+	GPIO_InitStruct.GPIO_OType               = GPIO_OType_PP;
+	GPIO_InitStruct.GPIO_PuPd                = GPIO_PuPd_NOPULL;
+	GPIO_Init(GPIOB, &GPIO_InitStruct);
+	
+	SYSCFG_EXTILineConfig(EXTI_PortSourceGPIOB, EXTI_PinSource4);
+	
+	EXTI_InitStruct.EXTI_Line                = EXTI_Line4;
+	EXTI_InitStruct.EXTI_Mode                = EXTI_Mode_Interrupt;
+	EXTI_InitStruct.EXTI_Trigger             = EXTI_Trigger_Rising;
+	EXTI_InitStruct.EXTI_LineCmd             = ENABLE;
+	EXTI_Init(&EXTI_InitStruct);
+	
+	NVIC_InitStruct.NVIC_IRQChannel          = EXTI4_IRQn;
+	NVIC_InitStruct.
+		NVIC_IRQChannelPreemptionPriority      = 0x01;
+	NVIC_InitStruct.
+	  NVIC_IRQChannelSubPriority             = 0x01;
+	NVIC_InitStruct.NVIC_IRQChannelCmd       = ENABLE;
+	NVIC_Init(&NVIC_InitStruct);
+	
 	/* MPU9150 Configuration */
 	MPU9150_InitStruct.I2Cx                  = I2C1;
 	MPU9150_InitStruct.Clock_Source          = MPU9150_CLOCK_SRC_GYRO_X_AXIS;
