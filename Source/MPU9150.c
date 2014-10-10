@@ -45,9 +45,6 @@
   * @{
   */
 
-/* Swap bytes of a 16-bit word */
-#define bswap16(X)  (((X & 0x00FF) << 8) | ((X & 0xFF00) >> 8))
-
 /**
   * @}
   */ 
@@ -247,22 +244,23 @@ void MPU9150_StartDMA_Read(void)
 	/* Wait for the bus to be free */
 	while (I2C_CheckEvent(I2C1, I2C_FLAG_BUSY));
 		
-	/* Start RA transmission */
+	/* Start RegAddr transmission */
 	MPU9150_I2C_Start(MPU9150_I2Cx, MPU9150_I2C_ADDR, I2C_Direction_Transmitter);
 	
-	/* Send RA */
+	/* Send RegAddr */
 	I2C_SendData(I2C1, MPU9150_ACCEL_XOUT_H_REG_ADDR);
 	
 	/* Wait for ACK */
 	while (!I2C_CheckEvent(I2C1, I2C_EVENT_MASTER_BYTE_TRANSMITTED));
 	
-	/* ReStart */
+	/* Restart in Master Receiver mode */
 	MPU9150_I2C_Start(MPU9150_I2Cx, MPU9150_I2C_ADDR, I2C_Direction_Receiver);	
 	
+	/* Enable DMA stream and I2C DMA requests */
 	I2C_DMACmd(I2C1, ENABLE);
-	  
 	DMA_Cmd(DMA1_Stream0, ENABLE);
 	
+	/* Sends ACK for each byte, terminates with NACK */
 	I2C_DMALastTransferCmd(I2C1, ENABLE);
 	I2C_AcknowledgeConfig(I2C1, ENABLE);
 }
@@ -270,14 +268,16 @@ void MPU9150_StartDMA_Read(void)
 
 void MPU9150_StopDMA(void)
 {
+	/* Revert to default NACK */
 	I2C_AcknowledgeConfig(I2C1, DISABLE);
-	  I2C_DMALastTransferCmd(I2C1, DISABLE);
-		
-		I2C_GenerateSTOP(I2C1, ENABLE);
-		
-		DMA_Cmd(DMA1_Stream0, DISABLE);
-		
-	  I2C_DMACmd(I2C1, DISABLE);
+	I2C_DMALastTransferCmd(I2C1, DISABLE);
+	
+	/* Send stop configuration */
+	I2C_GenerateSTOP(I2C1, ENABLE);
+	
+	/* Disable DMA stream and I2C DMA requests */
+	DMA_Cmd(DMA1_Stream0, DISABLE);
+	I2C_DMACmd(I2C1, DISABLE);
 }
 
 

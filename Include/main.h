@@ -32,6 +32,10 @@
 /* Exported types ------------------------------------------------------------*/
 /* Exported constants --------------------------------------------------------*/
 /* Exported macro ------------------------------------------------------------*/
+
+/* Swap bytes of a 16-bit word */
+#define bswap16(X)  (((X & 0x00FF) << 8) | ((X & 0xFF00) >> 8))
+
 /* Exported functions ------------------------------------------------------- */
 void TimingDelay_Decrement(void);
 void Delay(__IO uint32_t nTime);

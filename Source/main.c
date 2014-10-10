@@ -42,7 +42,7 @@ __ALIGN_BEGIN USB_OTG_CORE_HANDLE  USB_OTG_dev __ALIGN_END;
   
 __IO uint32_t 	TimingDelay = 0x0;
 __IO uint8_t		ProgramExecuting = 0x0;
-__IO int16_t    pIMUBuffer[6];
+__IO int16_t    pIMUBuffer[10];
 
 /* Private function prototypes -----------------------------------------------*/
 static uint32_t STM_USB_Config(void);
@@ -58,9 +58,7 @@ static uint32_t MPU9150_Config(void);
   * @retval None
   */
 int main(void)
-{	
-	DMA_InitTypeDef DMA_InitStructure;
-	
+{
   /* Initialize LEDs */  
   STM_EVAL_LEDInit(LED3);
   STM_EVAL_LEDInit(LED4);
@@ -68,7 +66,7 @@ int main(void)
   STM_EVAL_LEDInit(LED6);
 	
   /* SysTick end of count event each 2ms */
-  SysTick_Config(SystemCoreClock / 1000);
+  SysTick_Config(SystemCoreClock / 500);
 		
 	/* USB configuration */
 	STM_USB_Config();
@@ -78,24 +76,6 @@ int main(void)
 	{
 		Fail_Handler();
 	}
-	
-	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_DMA1, ENABLE);
-	DMA_DeInit(DMA1_Stream0);
-	
-	DMA_InitStructure.DMA_PeripheralBaseAddr = (uint32_t)&(I2C1->DR);
-  DMA_InitStructure.DMA_Memory0BaseAddr = (uint32_t)(&pIMUBuffer[0]);
-  DMA_InitStructure.DMA_DIR = DMA_DIR_PeripheralToMemory;
-  DMA_InitStructure.DMA_BufferSize = 12;
-  DMA_InitStructure.DMA_PeripheralInc = DMA_PeripheralInc_Disable;
-  DMA_InitStructure.DMA_MemoryInc = DMA_MemoryInc_Enable;
-  DMA_InitStructure.DMA_PeripheralDataSize = DMA_PeripheralDataSize_Byte;
-  DMA_InitStructure.DMA_MemoryDataSize = DMA_MemoryDataSize_Byte;
-  DMA_InitStructure.DMA_Mode = DMA_Mode_Normal;
-  DMA_InitStructure.DMA_Priority = DMA_Priority_VeryHigh;
-  DMA_InitStructure.DMA_Channel = DMA_Channel_1;
-  DMA_Init(DMA1_Stream0, &DMA_InitStructure);
-
-  DMA_Cmd(DMA1_Stream0, ENABLE);
 	
 	/* MPU9150 configuration */
 	if (0x0 != MPU9150_Config())
@@ -207,12 +187,13 @@ static uint32_t MPU9150_Config(void)
 	GPIO_InitTypeDef               GPIO_InitStruct;
 	EXTI_InitTypeDef               EXTI_InitStruct;
 	NVIC_InitTypeDef               NVIC_InitStruct;
+	DMA_InitTypeDef                DMA_InitStructure;
 	
 	/* MPU9150 Configuration */
 	MPU9150_InitStruct.I2Cx                  = I2C1;
 	MPU9150_InitStruct.Clock_Source          = MPU9150_CLOCK_SRC_GYRO_X_AXIS;
 	MPU9150_InitStruct.LowPass_Filter        = MPU9150_LOWPASSFILTER_3;
-	MPU9150_InitStruct.SampleRate_Divider    = 99;                             
+	MPU9150_InitStruct.SampleRate_Divider    = 19;                            // 50Hz  
 	MPU9150_InitStruct.Gyro_FullScale_Range  = MPU9150_GYRO_FULLSCALE_2000;
 	MPU9150_InitStruct.Accel_FullScale_Range = MPU9150_ACCEL_FULLSCALE_2;
 	MPU9150_Init(&MPU9150_InitStruct);
@@ -238,11 +219,13 @@ static uint32_t MPU9150_Config(void)
 	
 	NVIC_InitStruct.NVIC_IRQChannel          = EXTI4_IRQn;
 	NVIC_InitStruct.
-		NVIC_IRQChannelPreemptionPriority      = 0x01;
+		NVIC_IRQChannelPreemptionPriority      = 0x02;
 	NVIC_InitStruct.
 	  NVIC_IRQChannelSubPriority             = 0x01;
 	NVIC_InitStruct.NVIC_IRQChannelCmd       = ENABLE;
 	NVIC_Init(&NVIC_InitStruct);
+	
+
 	
 	/* MPU9150 Interrupt configuration */
 	MPU9150_InterruptInitStruct.Mode         = MPU9150_INTERRUPT_MODE_PUSH_PULL;
@@ -253,6 +236,34 @@ static uint32_t MPU9150_Config(void)
 	                                           MPU9150_FIFO_GYRO_Y |
 	                                           MPU9150_FIFO_GYRO_Z;
 	MPU9150_InterruptConfig(&MPU9150_InterruptInitStruct);
+	
+	/* DMA configuration */
+	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_DMA1, ENABLE);
+	
+	DMA_DeInit(DMA1_Stream0);
+	DMA_StructInit(&DMA_InitStructure);
+	DMA_InitStructure.DMA_Channel            = DMA_Channel_1;
+	DMA_InitStructure.DMA_PeripheralBaseAddr = (uint32_t)&(I2C1->DR);
+  DMA_InitStructure.DMA_Memory0BaseAddr    = (uint32_t)(&pIMUBuffer[0]);
+  DMA_InitStructure.DMA_DIR                = DMA_DIR_PeripheralToMemory;
+  DMA_InitStructure.DMA_BufferSize         = 20;
+  DMA_InitStructure.DMA_PeripheralInc      = DMA_PeripheralInc_Disable;
+  DMA_InitStructure.DMA_MemoryInc          = DMA_MemoryInc_Enable;
+  DMA_InitStructure.DMA_PeripheralDataSize = DMA_PeripheralDataSize_Byte;
+  DMA_InitStructure.DMA_MemoryDataSize     = DMA_MemoryDataSize_Byte;
+  DMA_InitStructure.DMA_Mode               = DMA_Mode_Normal;
+  DMA_InitStructure.DMA_Priority           = DMA_Priority_VeryHigh;
+  DMA_Init(DMA1_Stream0, &DMA_InitStructure);
+	
+	DMA_ITConfig(DMA1_Stream0, DMA_IT_TC, ENABLE);
+	
+	NVIC_InitStruct.NVIC_IRQChannel          = DMA1_Stream0_IRQn;
+	NVIC_InitStruct.
+		NVIC_IRQChannelPreemptionPriority      = 0x01;
+	NVIC_InitStruct.
+	  NVIC_IRQChannelSubPriority             = 0x01;
+	NVIC_InitStruct.NVIC_IRQChannelCmd       = ENABLE;
+	NVIC_Init(&NVIC_InitStruct);
 	
 	/* WHO_AM_I Test */
 	MPU9150_Read(MPU9150_WHO_AM_I_REG_ADDR, &bCtrlReg, 1);

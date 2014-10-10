@@ -27,21 +27,15 @@
 #include "usb_core.h"
 #include "usbd_core.h"
 #include "stm32f4_discovery.h"
-#include "stm32f4_discovery_lis302dl.h"
 #include "MPU9150.h"
 
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
-#define LIS302DL_PENDING_IRQ	0x40
-#define LIS302DL_CLICK_X			0x01
-#define LIS302DL_CLICK_Y			0x04
-#define LIS302DL_CLICK_Z			0x10
-
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
 extern __IO uint32_t	TimingDelay;
 extern __IO uint8_t		ProgramExecuting;
-extern __IO int16_t   pIMUBuffer[6];
+extern __IO int16_t   pIMUBuffer[10];
 
 /* Private function prototypes -----------------------------------------------*/
 extern USB_OTG_CORE_HANDLE           USB_OTG_dev;
@@ -164,15 +158,6 @@ void SysTick_Handler(void)
 /*  file (startup_stm32fxxx.s).                                               */
 /******************************************************************************/
 
-/**
-  * @brief  This function handles PPP interrupt request.
-  * @param  None
-  * @retval None
-  */
-/*void PPP_IRQHandler(void)
-{
-}*/
-
 
 /**
   * @brief  This function handles EXTI0_IRQ Handler.
@@ -183,30 +168,33 @@ void EXTI4_IRQHandler(void)
 {
 	if (EXTI_GetITStatus(EXTI_Line4) == SET)
 	{
-//		int16_t  nSamples = 0x0;
-		uint8_t  Status = 0x0;
-//		
-//		/* Clear interrupt flag */
-//		MPU9150_Read(MPU9150_INT_STATUS_REG_ADDR, &Status, 1);
-//		
-//		/* Read FIFO */
-//		nSamples = MPU9150_ReadFIFO((int16_t *)pIMUBuffer);
-//		
-//		if (nSamples != 0x0C) STM_EVAL_LEDToggle(LED5);
-		
 		MPU9150_StartDMA_Read();
 		
-		while (DMA_GetFlagStatus(DMA1_Stream0, DMA_FLAG_TCIF0)==RESET);
+		EXTI_ClearITPendingBit(EXTI_Line4);
+	}
+}
+
+
+void DMA1_Stream0_IRQHandler(void)
+{
+	if (DMA_GetITStatus(DMA1_Stream0, DMA_IT_TCIF0) == SET)
+	{
+		uint8_t  Status = 0x0;
+		uint8_t  i;
 		
 		MPU9150_StopDMA();
 		
-		DMA_ClearFlag(DMA1_Stream0, DMA_FLAG_TCIF0);
-
+		/* Reset INT pin on the MPU9150 */
 		MPU9150_Read(MPU9150_INT_STATUS_REG_ADDR, &Status, 1);
-
-		STM_EVAL_LEDToggle(LED4);
 		
-		EXTI_ClearITPendingBit(EXTI_Line4);
+		for (i = 0; i < 10; i++)
+		{
+			pIMUBuffer[i] = (int16_t)(bswap16(pIMUBuffer[i]));
+		}
+		
+		STM_EVAL_LEDToggle(LED4);
+
+		DMA_ClearITPendingBit(DMA1_Stream0, DMA_IT_TCIF0);
 	}
 }
 
