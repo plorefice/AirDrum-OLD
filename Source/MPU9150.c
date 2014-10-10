@@ -84,7 +84,7 @@ static void MPU9150_Compass_Init(void);
   */
 
 /**
-  * @brief  Set MPU9150 Initialization.
+  * @brief  Initializes the MPU9150.
   * @param  MPU9150_InitStruct: pointer to a MPU9150_InitTypeDef structure 
   *         that contains the configuration setting for the MPU9150.
   * @retval None
@@ -121,6 +121,36 @@ void MPU9150_Init(MPU9150_InitTypeDef *MPU9150_InitStruct)
 	
 	/* Configure the Magnetometer */
 	MPU9150_Compass_Init();
+}
+
+
+/**
+  * @brief  Configure MPU9150 interrupts.
+  * @param  MPU9150_InitStruct: pointer to a MPU9150_InitTypeDef structure 
+  *         that contains the configuration setting for the MPU9150.
+  * @retval None
+  */
+void MPU9150_InterruptConfig(MPU9150_InterruptConfigTypeDef *MPU9150_InterruptInitStruct)
+{
+	uint8_t ctrl = 0x00;
+
+	/* Configure FIFO sources */
+	ctrl = (uint8_t)(MPU9150_InterruptInitStruct->Sources);
+	MPU9150_Write(MPU9150_FIFO_EN_REG_ADDR, &ctrl, 1);
+	
+	/* Enable FIFO buffer */
+	ctrl = 0x40;
+	MPU9150_Write(MPU9150_USER_CTRL_REG_ADDR, &ctrl, 1);
+	
+	/* Enable interrupts */
+	ctrl = (uint8_t)(MPU9150_InterruptInitStruct->Level |
+	                 MPU9150_InterruptInitStruct->Mode  |
+	                 MPU9150_InterruptInitStruct->Latched);
+	MPU9150_Write(MPU9150_INT_PIN_CFG_REG_ADDR, &ctrl, 1);
+	
+	/* Enable DRDY interrupt */
+	ctrl = 0x01;
+	MPU9150_Write(MPU9150_INT_ENABLE_REG_ADDR, &ctrl, 1);
 }
 
 
@@ -240,13 +270,18 @@ static void MPU9150_LowLevel_Init(void)
   */
 static uint8_t MPU9150_Compass_Test(void)
 {
-	uint8_t Data = 0x02;
+	uint8_t Data = 0x00;
 	
 	/* Enable direct access to AUX I2C bus inside MPU9150 from the Discovery */
+	Data = 0x02;
 	MPU9150_I2C_WriteBuffer(MPU9150_I2Cx, MPU9150_I2C_ADDR, MPU9150_INT_PIN_CFG_REG_ADDR, &Data, 1);
 	
 	/* Read WHO_AM_I register of AK8975C */
 	MPU9150_I2C_ReadBuffer(MPU9150_I2Cx, AK8975C_I2C_ADDR, AK8975C_WIA_REG_ADDR, &Data, 1);
+	
+	/* Disable direct access to AUX I2C bus */
+	Data = 0x00;
+	MPU9150_I2C_WriteBuffer(MPU9150_I2Cx, MPU9150_I2C_ADDR, MPU9150_INT_PIN_CFG_REG_ADDR, &Data, 1);
 	
 	/* Wrong DevID */
 	if (Data != 0x48) return 1;
@@ -266,8 +301,6 @@ static void MPU9150_Compass_Init(void)
 	{
 		Fail_Handler();
 	}
-	
-	
 }
 
 

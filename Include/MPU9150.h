@@ -53,7 +53,7 @@ typedef struct
 	uint8_t Level;
 	uint8_t Mode;
 	uint8_t Latched;
-	uint8_t Source;
+	uint8_t Sources;
 } MPU9150_InterruptConfigTypeDef;
 
 /**

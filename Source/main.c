@@ -253,17 +253,27 @@ static uint32_t MPU9150_Config(void)
 {
 	uint8_t bCtrlReg = 0x0;
 
-	MPU9150_InitTypeDef     MPU9150_InitStruct;
+	MPU9150_InitTypeDef            MPU9150_InitStruct;
+	MPU9150_InterruptConfigTypeDef MPU9150_InterruptInitStruct;
 	
 	/* MPU9150 Configuration */
-	
 	MPU9150_InitStruct.I2Cx                  = I2C1;
 	MPU9150_InitStruct.Clock_Source          = MPU9150_CLOCK_SRC_GYRO_X_AXIS;
 	MPU9150_InitStruct.LowPass_Filter        = MPU9150_LOWPASSFILTER_6;
-	MPU9150_InitStruct.SampleRate_Divider    = 0;                             // 1KHz Sample Rate
+	MPU9150_InitStruct.SampleRate_Divider    = 0;                             
 	MPU9150_InitStruct.Gyro_FullScale_Range  = MPU9150_GYRO_FULLSCALE_500;
 	MPU9150_InitStruct.Accel_FullScale_Range = MPU9150_ACCEL_FULLSCALE_2;
 	MPU9150_Init(&MPU9150_InitStruct);
+	
+	/* MPU9150 Interrupt configuration */
+	MPU9150_InterruptInitStruct.Mode         = MPU9150_INTERRUPT_MODE_PUSH_PULL;
+	MPU9150_InterruptInitStruct.Level        = MPU9150_INTERRUPT_LEVEL_HIGH;
+	MPU9150_InterruptInitStruct.Latched      = MPU9150_INTERRUPT_LATCHED;
+	MPU9150_InterruptInitStruct.Sources      = MPU9150_FIFO_ACCEL  |
+	                                           MPU9150_FIFO_GYRO_X |
+	                                           MPU9150_FIFO_GYRO_Y |
+	                                           MPU9150_FIFO_GYRO_Z;
+	MPU9150_InterruptConfig(&MPU9150_InterruptInitStruct);
 	
 	/* WHO_AM_I Test */
 	MPU9150_Read(MPU9150_WHO_AM_I_REG_ADDR, &bCtrlReg, 1);
