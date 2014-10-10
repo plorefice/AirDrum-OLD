@@ -183,17 +183,27 @@ void EXTI4_IRQHandler(void)
 {
 	if (EXTI_GetITStatus(EXTI_Line4) == SET)
 	{
-		int16_t  nSamples = 0x0;
+//		int16_t  nSamples = 0x0;
 		uint8_t  Status = 0x0;
+//		
+//		/* Clear interrupt flag */
+//		MPU9150_Read(MPU9150_INT_STATUS_REG_ADDR, &Status, 1);
+//		
+//		/* Read FIFO */
+//		nSamples = MPU9150_ReadFIFO((int16_t *)pIMUBuffer);
+//		
+//		if (nSamples != 0x0C) STM_EVAL_LEDToggle(LED5);
 		
-		/* Clear interrupt flag */
+		MPU9150_StartDMA_Read();
+		
+		while (DMA_GetFlagStatus(DMA1_Stream0, DMA_FLAG_TCIF0)==RESET);
+		
+		MPU9150_StopDMA();
+		
+		DMA_ClearFlag(DMA1_Stream0, DMA_FLAG_TCIF0);
+
 		MPU9150_Read(MPU9150_INT_STATUS_REG_ADDR, &Status, 1);
-		
-		/* Read FIFO */
-		nSamples = MPU9150_ReadFIFO((int16_t *)pIMUBuffer);
-		
-		if (nSamples != 0x0C) STM_EVAL_LEDToggle(LED5);
-		
+
 		STM_EVAL_LEDToggle(LED4);
 		
 		EXTI_ClearITPendingBit(EXTI_Line4);

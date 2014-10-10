@@ -316,6 +316,9 @@ void     MPU9150_ReadAccel(int16_t *pBuffer);
 void     MPU9150_ReadGyro(int16_t *pBuffer);
 uint16_t MPU9150_ReadFIFO(int16_t *pBuffer);
 
+void     MPU9150_StartDMA_Read(void);
+void     MPU9150_StopDMA(void);
+
 /**
   * @}
   */ 
